@@ -5,6 +5,15 @@ import numpy as np
 
 from matplotlib.colors import Normalize
 
+# approximate original figure in http://spatial.libd.org/spatialLIBD/
+palette_celltype={'L1':'#eb34a8',
+                  'L2':'#3486eb',
+                  'L3':'#34eb5b',
+                  'L4':"#ae34eb",
+                  'L5':'#ebdb34',
+                  'L6':'#eb9234',
+                  'WM':'#000000'}
+
 def plot_spatial(
     adata,
     color,  # list of genes
