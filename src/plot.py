@@ -14,6 +14,9 @@ palette_celltype={'L1':'#eb34a8',
                   'L6':'#eb9234',
                   'WM':'#000000'}
 
+palette_entity_anno = palette_celltype.copy()
+palette_entity_anno['gene'] = "lightgray"
+
 def plot_spatial(
     adata,
     color,  # list of genes
@@ -87,3 +90,92 @@ def plot_spatial(
     plt.tight_layout()
     
     return fig, axes
+
+# from Yo Akiyama
+import matplotlib.ticker as ticker
+import scipy.stats as stats
+def setup_figure(aw=4.5, ah=3, xspace=[0.75,0.25], yspace=[0.75,0.25],
+                 colorbar=False, ds=0.15, cw=0.15, ct=0, ch=None):
+    dl, dr = xspace
+    db, dt = yspace
+    fw = dl + aw + dr
+    fh = db + ah + dt
+    fig = plt.figure(facecolor=(1,1,1), figsize=(fw,fh))
+    ax = fig.add_axes([dl/fw, db/fh, aw/fw, ah/fh])
+    if not colorbar:
+        return ax
+    else:
+        if ch is None:
+            ch = ah/2
+        cax = fig.add_axes([(dl+aw+ds)/fw, (db+ah-ch-ct)/fh, cw/fw, ch/fh])
+        return ax, cax
+
+def qqplot(pval, pval_null=None, title='', labels=None, ax=None, c=None, s=16, highlight_indices=None, highlight_c=None, highlight_label=None):
+    """QQ-plot"""
+    if labels is None:
+        labels = ['', '']
+
+    n = len(pval)
+    x = -np.log10(np.arange(1,n+1)/(n+1))
+
+    if ax is None:
+        ax = setup_figure(4,4)
+
+    ax.margins(x=0.02, y=0.05)
+    args = {'s':s, 'edgecolor':'none', 'clip_on':False, 'alpha':1, 'rasterized':True}
+    
+    pval_idx_sorted = np.argsort(pval)
+    log_pval_sorted = -np.log10(pval[pval_idx_sorted])
+
+    ax.scatter(
+        x,
+        log_pval_sorted,
+        c=c,
+        zorder=30,
+        label=labels[0],
+        **args
+    )
+    
+    if highlight_indices is not None:
+        sorted_highlight_indices = [np.where(pval_idx_sorted == i)[0][0] for i in highlight_indices]
+        ax.scatter(
+            x[sorted_highlight_indices],
+            log_pval_sorted[sorted_highlight_indices],
+            c=highlight_c,
+            zorder=40,
+            label=highlight_label,
+            **args
+        )
+
+    if pval_null is not None:
+        assert len(pval)==len(pval_null)
+        log_pval_sorted = -np.log10(np.sort(pval_null))
+        ax.scatter(
+            x,
+            log_pval_sorted,
+            c=[[0.5]*3],
+            zorder=20,
+            label=labels[1],
+            **args
+        )
+
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True, min_n_ticks=5, nbins=4))
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True, min_n_ticks=5, nbins=4))
+    ax.set_xlabel('Expected -log$\mathregular{_{10}}$(p-value)', fontsize=14)
+    ax.set_ylabel('Observed -log$\mathregular{_{10}}$(p-value)', fontsize=14)
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    ax.set_xlim([0, xlim[1]])
+    ax.set_ylim([0, ylim[1]])
+    ci = 0.95
+    xi = np.arange(1, n+1)
+    clower = -np.log10(stats.beta.ppf((1-ci)/2, xi, xi[::-1]))
+    cupper = -np.log10(stats.beta.ppf((1+ci)/2, xi, xi[::-1]))
+    ax.fill_between(x, cupper, clower, color=[[0.8]*3], clip_on=True, rasterized=True)
+    ax.plot([x[0], x[-1]], [x[0], x[-1]], '--', lw=1, color=[0.2]*3, zorder=50, clip_on=True, rasterized=True)
+    #ax.spines['left'].set_position(('outward', 6))
+    #ax.spines['bottom'].set_position(('outward', 6))
+    ax.set_title('{}'.format(title), fontsize=12)
+    if labels[0] != '':
+        ax.legend(loc='upper left', fontsize=10, handlelength=0.5, handletextpad=0.33)
