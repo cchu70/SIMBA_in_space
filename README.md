@@ -18,3 +18,16 @@ python -m ipykernel install --user --name env_simba
 ```
 
 Select `env_simba` as the kernel for running jupyter notebooks.
+
+# Installing R in jupyter lab
+
+- https://docs.ncsa.illinois.edu/systems/delta/en/latest/user_guide/ood/custom-r.html
+- https://irkernel.github.io/installation/
+
+1. Open terminal
+2. Run `R`
+3. `install.packages('IRkernel')`
+4. `IRkernel::installspec()`
+5. Quit R: `q()`
+6. `conda config --add channels r`
+7. Open Launcher. `R` should be available

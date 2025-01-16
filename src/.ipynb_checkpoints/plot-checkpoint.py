@@ -91,6 +91,76 @@ def plot_spatial(
     
     return fig, axes
 
+
+def plot_obs_spatial(
+    adata, 
+    obs_cols=['n_counts'],
+    filter_col=None,
+    filter_vals=None,
+    x_obs_col="array_col",  # Use col as x to get the correct orientation
+    y_obs_col="array_row",
+    palette='viridis',
+    fig_ncol=2,
+    fig_size=(4,4),
+    vmin=None, # list same length as obs_col
+    vmax=None,
+    **kwargs
+):
+
+    # Calculate number of rows needed
+    fig_nrow = int(np.ceil(len(obs_cols) / fig_ncol))
+    
+    # Create figure and axes
+    fig, axes = plt.subplots(
+        fig_nrow, fig_ncol, 
+        figsize=(fig_size[0]*fig_ncol, fig_size[1]*fig_nrow), 
+        sharex=True, sharey=True,
+        squeeze=False  # This ensures axes is always 2D
+    )
+    
+    # Flatten axes for easier iteration of multiple rows
+    axes_flat = axes.flatten()
+
+    obs_df = copy.deepcopy(adata_CG.obs)
+
+    if filter_col:
+        obs_df = obs_df[obs_df[filter_col].isin(filter_vals)]
+    
+    for i, col in enumerate(obs_cols):
+        ax = axes_flat[i]
+
+        g = sns.scatterplot(
+            data=adata.obs, 
+            x=x_obs_col, 
+            y=y_obs_col, 
+            ax=ax,
+            color='lightgrey',  # We'll color the points manually
+            **kwargs
+        )
+        
+        scatter = ax.scatter(
+            x=obs_df[x_obs_col],
+            y=obs_df[y_obs_col],
+            c=obs_df[col],
+            cmap=palette,
+            vmin=obs_df[col].min() if vmin is None else vmin[i],
+            vmax=obs_df[col].max() if vmax is None else vmax[i],
+            **kwargs
+        )
+    
+        # Add colorbar
+        plt.colorbar(scatter, ax=ax)
+        
+        ax.set_facecolor('k')
+        ax.set_xlabel(None)
+        ax.set_ylabel(None)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title(col)
+
+    ax.invert_yaxis()
+    return fig, ax
+
 # from Yo Akiyama
 import matplotlib.ticker as ticker
 import scipy.stats as stats
