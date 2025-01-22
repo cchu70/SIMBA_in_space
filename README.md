@@ -31,3 +31,17 @@ Select `env_simba` as the kernel for running jupyter notebooks.
 5. Quit R: `q()`
 6. `conda config --add channels r`
 7. Open Launcher. `R` should be available
+
+# Running benchmarking analysis
+
+Tasks:
+- Embedding tools:
+    - PCA
+    - SpatialPCA
+    - SIMBA RNAseq only
+    - SIMBA spatial info only
+- Performance metrics
+    - Silouhette score
+    - ARI/NMI/LISI
+ 
+Data: human DLPFC
