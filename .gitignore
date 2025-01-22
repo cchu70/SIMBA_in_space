@@ -1,4 +1,6 @@
+sandbox/data/*
+sandbox/result_simba_rnaseq/*
+sandbox/result_simba_rnaseq_spatialLIBD/*
+sandbox/result_simba_spatial/*
 data/*
-result_simba_rnaseq/*
-result_simba_rnaseq_spatialLIBD/*
-result_simba_spatial/*
+results/*
