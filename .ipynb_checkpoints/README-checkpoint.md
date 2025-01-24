@@ -32,6 +32,36 @@ Select `env_simba` as the kernel for running jupyter notebooks.
 6. `conda config --add channels r`
 7. Open Launcher. `R` should be available
 
+# Installing SpatialPCA
+
+- Updated to `R version 4.4.2 (2024-10-31)`
+- Install `SPARK` from source: `devtools::install_github('xzhoulab/SPARK')`
+
+Issues with installing SPARK on mac. Reported issues for M1 chips: https://github.com/xzhoulab/SPARK/issues/12#issuecomment-2107495029
+```
+brew install gcc
+```
+
+Make files:
+```
+mkdir -p ~/.R  
+nano ~/.R/Makevars
+```
+
+In `~/.R/Makevars`
+```
+FC = /usr/local/bin/gfortran
+F77 = /usr/local/bin/gfortran
+#FLIBS = -L/usr/local/Cellar/gcc/14.2.0_1 -lgfortran -lquadmath -lm
+FLIBS = /usr/local/Cellar/gcc/14.2.0_1 -lgfortran -lquadmath -lm
+```
+
+Added following to .bashrc
+```
+export PATH="/usr/local/bin:$PATH"
+```
+
+
 # Running benchmarking analysis
 
 Tasks:
@@ -43,3 +73,5 @@ Tasks:
 - Performance metrics
     - Silouhette score
     - ARI/NMI/LISI
+ 
+Data: human DLPFC
