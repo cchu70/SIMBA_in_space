@@ -48,12 +48,12 @@ mkdir -p ~/.R
 nano ~/.R/Makevars
 ```
 
+From Claude.ai
 In `~/.R/Makevars`
 ```
 FC = /usr/local/bin/gfortran
 F77 = /usr/local/bin/gfortran
-#FLIBS = -L/usr/local/Cellar/gcc/14.2.0_1 -lgfortran -lquadmath -lm
-FLIBS = /usr/local/Cellar/gcc/14.2.0_1 -lgfortran -lquadmath -lm
+FLIBS = -L/usr/local/Cellar/gcc/14.2.0_1/lib/gcc/current -lgfortran -lquadmath -lm
 ```
 
 Added following to .bashrc
@@ -61,6 +61,22 @@ Added following to .bashrc
 export PATH="/usr/local/bin:$PATH"
 ```
 
+Add symlinks
+```
+sudo ln -s /usr/local/Cellar/gcc/14.2.0_1/lib/gcc/current/libgfortran.dylib /usr/local/lib/libgfortran.dylib
+sudo ln -s /usr/local/Cellar/gcc/14.2.0_1/lib/gcc/current/libquadmath.dylib /usr/local/lib/libquadmath.dylib
+```
+
+In an R session:
+```
+R
+> devtools::install_github("xzhoulab/SPARK") # install separately
+> library(devtools)
+> install_github("shangll123/SpatialPCA")
+> remotes::install_github("mojaveazure/seurat-disk") # to read h5ad files
+```
+
+Follow tutorial: https://lulushang.org/SpatialPCA_Tutorial/DLPFC.html
 
 # Running benchmarking analysis
 
