@@ -255,4 +255,3 @@ dependencies:
     - zarr==2.18.3
     - zict==3.0.0
     - zipp==3.21.0
-prefix: /Users/cchu/opt/anaconda3/envs/env_simba
