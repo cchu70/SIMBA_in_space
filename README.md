@@ -8,6 +8,17 @@ conda config --add channels conda-forge
 conda config --set channel_priority strict
 
 conda create -n env_simba simba
+
+# in cluster environment
+conda create --prefix /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/env_simba 
+conda install python=3.8
+
+# set path for conda to find envs
+conda config --add envs_dirs /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs
+
+# install
+conda activate env_simba
+conda install -c bioconda simba
 ```
 
 Load environment and install ipykernel for jupyter
@@ -32,7 +43,7 @@ Select `env_simba` as the kernel for running jupyter notebooks.
 6. `conda config --add channels r`
 7. Open Launcher. `R` should be available
 
-# Installing SpatialPCA
+# Installing SpatialPCA on Mac
 
 - Updated to `R version 4.4.2 (2024-10-31)`
 - Install `SPARK` from source: `devtools::install_github('xzhoulab/SPARK')`
@@ -76,7 +87,34 @@ R
 > remotes::install_github("mojaveazure/seurat-disk") # to read h5ad files
 ```
 
+## Install on cluster
+
+Create R conda environment
+```
+conda create --prefix /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/R_env
+conda activate R_env
+conda install -c conda-forge r-base
+conda install -c conda-forge r-essentials
+```
+
 Follow tutorial: https://lulushang.org/SpatialPCA_Tutorial/DLPFC.html
+
+# Setting up conda environment on cluster
+
+Make the `yml` file:
+```
+conda env export --no-builds > environment.yml
+```
+
+Removed `prefix:` line in the `environment.yml` file, and line with `- libgfortran=5.0.0`
+```
+conda env create --prefix /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/env_simba --file=environment.yml
+```
+
+Or, just remake:
+```
+conda env create --prefix /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/env_simba simba
+```
 
 # Running benchmarking analysis
 
