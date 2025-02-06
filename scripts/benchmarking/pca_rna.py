@@ -17,6 +17,7 @@ def run_PCA(
         os.m(workdir)
         
     sc.tl.pca(adata_CG)
+    adata_CG.X
 
     adata_CG.write(os.path.join(workdir, 'adata_CG.h5ad'))
     

@@ -14,9 +14,10 @@ def run_PCA(
     adata_CG,
 ):
     if not os.path.exists(workdir):
-        os.makedirs(workdir)
+        os.m(workdir)
         
     sc.tl.pca(adata_CG)
+    adata_CG.X
 
     adata_CG.write(os.path.join(workdir, 'adata_CG.h5ad'))
     
