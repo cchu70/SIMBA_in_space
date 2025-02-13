@@ -81,8 +81,9 @@ sudo ln -s /usr/local/Cellar/gcc/14.2.0_1/lib/gcc/current/libquadmath.dylib /usr
 In an R session:
 ```
 R
-> devtools::install_github("xzhoulab/SPARK") # install separately
+> install.packages("devtools")
 > library(devtools)
+> devtools::install_github("xzhoulab/SPARK") # install separately
 > install_github("shangll123/SpatialPCA")
 > remotes::install_github("mojaveazure/seurat-disk") # to read h5ad files
 ```
@@ -95,6 +96,94 @@ conda create --prefix /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs
 conda activate R_env
 conda install -c conda-forge r-base
 conda install -c conda-forge r-essentials
+conda install conda-forge::r-rspectra
+
+conda install python==3.9 # requirement for r-seurat?
+conda install bioconda::r-seurat
+
+#conda install conda-forge::r-umap
+#conda install bioconda::bioconductor-splatter
+```
+
+Running into issues installing r-seurat. Claude.ai 3.5 Sonnet:
+```
+conda install -c conda-forge r-matrix
+conda install -c conda-forge r-rcpp
+conda install -c bioconda r-uwot
+conda install -c bioconda r-seurat
+```
+
+Tried remaking from scratch:
+```
+conda create -n cc_simba r-base=4.3 python=3.10 -c conda-forge
+# Error/Missing dependencies
+
+
+R
+> install.packages(c("SeuratObject", "cowplot", "fitdistrplus", "ggplot2", "ggrepel", "ggridges", "igraph", "irlba", "leidenbase", "MASS", "Matrix", "miniUI", "patchwork", "plotly", "png", "reticulate", "RSpectra", "scattermore", "sctransform", "shiny", "spatstat.explore", "spatstat.geom", "uwot", "RcppEigen"))
+
+Error: 
+ERROR: dependencies ‘spatstat.data’, ‘spatstat.geom’, ‘spatstat.random’, ‘spatstat.sparse’, ‘Matrix’ are not available for package ‘spatstat.explore’
+
+conda install conda-forge::r-matrix
+conda install conda-forge::r-spatstat.geom
+conda install conda-forge::r-spatstat.random conda-forge::r-spatstat.sparse conda-forge::r-spatstat.data
+conda install conda-forge::r-spatstat.explore
+conda install conda-forge::r-ggplot2
+conda install conda-forge::r-rcppeigen conda-forge::r-uwot
+conda install conda-forge::r-shiny conda-forge::r-sctransform conda-forge::r-scattermore conda-forge::r-rspectra conda-forge::r-reticulate
+conda install conda-forge::r-png conda-forge::r-plotly conda-forge::r-patchwork conda-forge::r-miniui conda-forge::r-mass bioconda::r-leidenbase
+conda install r::r-irlba
+conda install conda-forge::r-igraph
+conda install conda-forge::r-ggridges conda-forge::r-ggrepel conda-forge::r-ggplot2 conda-forge::r-fitdistrplus
+
+conda install conda-forge::r-cowplot conda-forge::r-seuratobject
+conda install -c bioconda r-seurat
+
+conda install conda-forge::r-devtools
+
+# Error loading devtools library in R shell
+conda install conda-forge::r-fastmap=1.2.0
+conda install conda-forge::r-promises=1.3.2
+conda install bioconda::bioconductor-splatter
+
+# more requirements for SpatialPCA tutorial
+conda install bioconda::bioconductor-bluster
+
+# simba
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+conda install bioconda::simba --no-deps # taking a long time. too many dependencies?
+# try to make a separate environment for this
+conda deactivate # in lab_py38 env
+conda create -n cc_simba_only simba # took a long time
+
+# cloning existing environment
+conda create --name cc_simba_only --clone jy_simba
+conda activate cc_simba_only
+(cc_simba_only): python -m ipykernel install --user --name cc_simba_only
+(cc_simba_only): pip install --upgrade matplotlib # upgrade to 3.10 for scanpy plotting compatibility
+```
+
+Install SpatialPCA
+```
+R
+> install.packages("devtools")
+> library(devtools)
+> install_github("shangll123/SpatialPCA")
+
+# for scripting
+> install.packages("argparse") 
+> install.packages("optparse")
+```
+
+Jupyter
+```
+conda install ipykernel
+python -m ipykernel install --user --name cc_simba --display-name cc_simba
+pip install scanpy seaborn matplotlib pandas numpy
 ```
 
 Follow tutorial: https://lulushang.org/SpatialPCA_Tutorial/DLPFC.html
