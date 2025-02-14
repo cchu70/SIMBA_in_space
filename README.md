@@ -165,6 +165,10 @@ conda create --name cc_simba_only --clone jy_simba
 conda activate cc_simba_only
 (cc_simba_only): python -m ipykernel install --user --name cc_simba_only
 (cc_simba_only): pip install --upgrade matplotlib # upgrade to 3.10 for scanpy plotting compatibility
+
+# running scanpy leiden clustering
+(cc_simba_only): pip3 install igraph
+(cc_simba_only): pip3 install leidenalg squidpy
 ```
 
 Install SpatialPCA
@@ -203,6 +207,16 @@ conda env create --prefix /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_
 Or, just remake:
 ```
 conda env create --prefix /data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/env_simba simba
+```
+
+## Using mamba to make simba environment
+
+In ml007
+```
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba create -n cc_mamba_simba bioconda::simba
+
+conda activate cc_mamba_simba
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install squidpy
 ```
 
 # Running benchmarking analysis

@@ -6,6 +6,10 @@ import simba as si
 import os
 import scanpy as sc
 import pandas as pd
+import numpy as np
+import copy
+import seaborn as sns
+# import squidpy as sq
 
 # approximate original figure in http://spatial.libd.org/spatialLIBD/
 palette_celltype={'L1':'#eb34a8',
@@ -30,6 +34,87 @@ si.settings.set_figure_params(
 from matplotlib_inline.backend_inline import set_matplotlib_formats
 set_matplotlib_formats('retina')
 
+def plot_obs_spatial(
+    adata, 
+    obs_cols=['n_counts'],
+    filter_col=None,
+    filter_vals=None,
+    x_obs_col="array_col",  # Use col as x to get the correct orientation
+    y_obs_col="array_row",
+    is_continuous=True,
+    palette='viridis',
+    fig_ncol=2,
+    fig_size=(4,4),
+    vmin=None, # list same length as obs_col
+    vmax=None,
+    **kwargs
+):
+
+    # Calculate number of rows needed
+    fig_nrow = int(np.ceil(len(obs_cols) / fig_ncol))
+    
+    # Create figure and axes
+    fig, axes = plt.subplots(
+        fig_nrow, fig_ncol, 
+        figsize=(fig_size[0]*fig_ncol, fig_size[1]*fig_nrow), 
+        sharex=True, sharey=True,
+        squeeze=False  # This ensures axes is always 2D
+    )
+    
+    # Flatten axes for easier iteration of multiple rows
+    axes_flat = axes.flatten()
+
+    obs_df = copy.deepcopy(adata.obs)
+
+    if filter_col:
+        obs_df = obs_df[obs_df[filter_col].isin(filter_vals)]
+    
+    for i, col in enumerate(obs_cols):
+        ax = axes_flat[i]
+
+        g = sns.scatterplot(
+            data=adata.obs, 
+            x=x_obs_col, 
+            y=y_obs_col, 
+            ax=ax,
+            color='lightgrey',  # We'll color the points manually
+            **kwargs
+        )
+        
+        if is_continuous:
+            scatter = ax.scatter(
+                x=obs_df[x_obs_col],
+                y=obs_df[y_obs_col],
+                c=obs_df[col],
+                cmap=palette,
+                vmin=obs_df[col].min() if vmin is None else vmin[i],
+                vmax=obs_df[col].max() if vmax is None else vmax[i],
+                **kwargs
+            )
+            # Add colorbar
+            plt.colorbar(scatter, ax=ax)
+        else:
+            scatter = sns.scatterplot(
+                x=obs_df[x_obs_col],
+                y=obs_df[y_obs_col],
+                hue=obs_df[col],
+                palette=palette,
+                ax=ax,
+                **kwargs
+            )
+            plt.legend(bbox_to_anchor=(1, 1))
+    
+        
+        # ax.set_facecolor('k')
+        ax.set_xlabel(None)
+        ax.set_ylabel(None)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title(col)
+
+    ax.invert_yaxis()
+    return fig, ax
+
 def generate_pca_figures(
     adata_output_df,
     path_col="run_simba_rna_only",
@@ -38,6 +123,7 @@ def generate_pca_figures(
     adata_color_col="spatialLIBD",
     fig_exts=["png"],
     run_pca=False,
+    palette=palette_celltype,
 ):
     
     fig_dir = f"{fig_path}/figures"
@@ -49,14 +135,13 @@ def generate_pca_figures(
         total=adata_output_df.shape[0]
     ):
         adata = sc.read_h5ad(f'{dir}/{cell_embedding_adata_fn}')
-        
         if run_pca:
             si.preprocessing.pca(adata)
 
         for fig_ext in fig_exts:
             fig_fn = f"{fig_path}/{s_id}.{fig_ext}"
             fig = sc.pl.pca(
-                adata, color=[adata_color_col], palette=palette_celltype, 
+                adata, color=[adata_color_col], palette=palette, 
                 dimensions=(0, 1),
                 return_fig=True,
                 show=False,
@@ -74,6 +159,7 @@ def generate_umap_figures(
     adata_color_col="spatialLIBD",
     fig_exts=["png"],
     run_umap=True,
+    palette=palette_celltype,
 ):
     """
     adata_output_df: 
@@ -102,7 +188,7 @@ def generate_umap_figures(
             fig_fn = f"{s_id}.{fig_ext}"
             si.pl.umap(
                 adata_C,color=[adata_color_col],
-                dict_palette={adata_color_col: palette_celltype},
+                dict_palette={adata_color_col: palette} if palette is not None else None,
                 fig_size=(6,4),
                 drawing_order='random',
                 save_fig=True,
@@ -111,6 +197,46 @@ def generate_umap_figures(
             adata_output_df.loc[s_id, f'umap_fig_{fig_ext}'] = f"{fig_path}/figures/{fig_fn}"
 
     return adata_output_df
+
+def generate_spatial_figures(
+    adata_output_df,
+    path_col="run_simba_rna_only",
+    cell_embedding_adata_fn="adata_C.h5ad",
+    adata_spatial_dir="/data/pinello/PROJECTS/2025-01-31_CC_Spatial_SIMBA/SIMBA_in_space/data/human_DLPFC/", # directory with the spatial coordinates.e.g.  <sample_id>.h5ad
+    fig_path = "../results/00/simba_rna_only/SPATIAL",
+    adata_color_col="spatialLIBD", # leiden, etc.
+    fig_exts=["png"],
+    **kwargs,
+):
+    if not os.path.exists(fig_path):
+        os.makedirs(fig_path)
+
+    for s_id, dir in tqdm.tqdm(
+        adata_output_df[path_col].items(), 
+        total=adata_output_df.shape[0]
+    ):
+        orig_adata = sc.read_h5ad(f"{adata_spatial_dir}/{s_id}.h5ad")
+        adata = sc.read_h5ad(f'{dir}/{cell_embedding_adata_fn}')
+        adata.obsm['spatial'] = orig_adata[adata.obs.index].obsm['spatial'].copy()
+        adata.obs['array_col'] = orig_adata[adata.obs.index].obsm['spatial'].copy()[:, 0]
+        adata.obs['array_row'] = orig_adata[adata.obs.index].obsm['spatial'].copy()[:, 1]
+
+        for fig_ext in fig_exts:
+            fig_fn = f"{fig_path}/{s_id}.{fig_ext}"
+            fig, ax = plot_obs_spatial(
+                adata,
+                obs_cols=[adata_color_col],
+                palette=None,
+                is_continuous=False,
+                **kwargs
+            )
+            fig.savefig(fig_fn)
+
+            adata_output_df.loc[s_id, f'spatial_fig_{fig_ext}'] = fig_fn
+
+    return adata_output_df
+    
+    
 
 def combine_images(
     adata_output_df,
