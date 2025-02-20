@@ -14,55 +14,13 @@ import numpy as np
 import scanpy as sc
 import matplotlib.pyplot as plt
 import anndata as ad
-from scipy.sparse import csr_matrix
-
-def gen_spatial_graph(
-    adata,
-    e, # magnitude
-    scalar=1, # could be gene expression correlation?
-):
-    # gaussian kernel
-    spots = adata.obsm['spatial']
-
-    squared_distances = get_squared_distances(spots)
-
-    kernel_matrix = gaussian_kernel_matrix(squared_distances, e, scalar)
-
-    adata_CC = ad.AnnData(kernel_matrix)
-    adata_CC.layers['simba'] = adata_CC.X
-
-    adata_CC.obs.index = adata.obs_names
-    adata_CC.var.index = adata.obs_names
-    adata_CC.obs = adata.obs.copy()
-    adata_CC.obsm['spatial'] = adata.obsm['spatial'].copy()
-    return adata_CC
-
-# < ChatGPT:
-def get_squared_distances(spots):
-    # spots: np.array list of grid points as tuples
-    # Generate all grid points as (row, col) pairs
-    # spots = np.array([(i, j) for i in range(N) for j in range(N)])
-    # Compute the pairwise squared Euclidean distances using broadcasting
-    diff = spots[:, np.newaxis, :] - spots[np.newaxis, :, :]
-    squared_distances = np.sum(diff**2, axis=2)    
-    return squared_distances
-    
-def gaussian_kernel_matrix(squared_distances, e, scalar):
-    # get gamma
-    max_squared_distance = np.max(squared_distances)
-    gamma = max_squared_distance * 10**(-e)
-    
-    # Apply the Gaussian kernel
-    kernel_matrix = np.exp(-squared_distances / gamma)
-    # single value or nxn weight
-    kernel_matrix = kernel_matrix * scalar
-    return csr_matrix(kernel_matrix, dtype=np.float32)
-# ChatGPT>    
+from spatial import gen_spatial_graph, SPATIAL_METHODS
 
 def run_simba_spatial_only(
     workdir, # determine which experiment is being run
     adata_CG,
     e = 2, # fraction of max distance for gamma
+    spatial_method='gaussian',
     label_col='spatialLIBD'
 ):
     # Set up
@@ -70,7 +28,7 @@ def run_simba_spatial_only(
     si.pp.cal_qc_rna(adata_CG)
     
     # Prepare graph
-    adata_CC = gen_spatial_graph(adata_CG, e = e)
+    adata_CC = gen_spatial_graph(adata_CG, e = e, spatial_method=spatial_method)
 
     si.tl.gen_graph(
         list_adata=[adata_CC],
@@ -99,25 +57,36 @@ def main(
     workdir, # determine which experiment is being run
     adata_paths, # table of adata paths
     label_col='spatialLIBD',
+    spatial_method='gaussian',
     e=2,
     rerun=False
 ):
     output_df = pd.DataFrame(index=list(adata_paths.keys()), columns=['run_simba_spatial_only'])
+
+    assert spatial_method in SPATIAL_METHODS
+
+    if spatial_method in ['gaussian', 'rbf']:
+        spatial_method_dir = f'{spatial_method}_e{e}' 
+    elif spatial_method == 'mask':
+        spatial_method_dir = f"{spatial_method}_r{e}" # mask radius
+
     for sample, adata_fn in adata_paths.items():
         adata_CG = sc.read_h5ad(adata_fn)
 
-        sample_workdir = f"{workdir}/{sample}"
+        sample_workdir = f"{workdir}/{spatial_method_dir}/{sample}"
+        print(f"{sample_workdir}")
         if not os.path.exists(sample_workdir) or rerun:
             run_simba_spatial_only(
                 workdir=sample_workdir,
                 adata_CG=adata_CG,
                 label_col=label_col,
+                spatial_method=spatial_method,
                 e=e,
             )
 
         output_df.loc[sample, 'run_simba_spatial_only'] = sample_workdir
 
-    output_fn = f"{workdir}/run_simba_spatial_only.output.tsv"
+    output_fn = f"{workdir}/{spatial_method_dir}/run_simba_spatial_only.output.tsv"
     output_df.to_csv(output_fn, sep='\t')
     print(f"Output: {output_fn}")
 
@@ -128,7 +97,8 @@ if __name__ == "__main__":
     parser.add_argument("--adata_dir", default=None, type=str, help="Directory to anndata RNAseq object with spatial annotations")
     parser.add_argument("--adata_fns", default=None, type=str, help="list of RNAseq objects paths, comma delimited")
     parser.add_argument("--label_col", default='spatialLIBD', help="Column in adata.obs table corresponding to cell labels")
-    parser.add_argument("--e", default=2, type=int, help="Gamma = max spot distance * 10^{-e}")
+    parser.add_argument("--spatial_method", default='gaussian', help='Approach for spatial edges: gaussian, rbf, or mask')
+    parser.add_argument("--e", default=2, type=int, help="Parameter for corresponding spatial method (gamma for gaussian/rbf, radius for mask)")
     parser.add_argument("--rerun", action=argparse.BooleanOptionalAction, default=False, help="Rerun")
     
     args = parser.parse_args()
@@ -157,5 +127,6 @@ if __name__ == "__main__":
         adata_paths=adata_paths,
         label_col=args.label_col,
         e=args.e,
+        spatial_method=args.spatial_method,
         rerun=args.rerun
     )

@@ -1,10 +1,12 @@
 #!/bin/bash
 
 # Run from scripts/. directory
-# activate simba conda environment
+# activate simba conda environment (cc_mamba_simba)
+# --adata_dir ../data/human_DLPFC \
 
 python benchmarking/simba_spatial_only.py \
     --workdir ../results/00/simba_spatial_only \
     --adata_dir ../data/human_DLPFC \
+    --spatial_method gaussian \
     --e 3 \
     --rerun
