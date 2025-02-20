@@ -115,6 +115,46 @@ def plot_obs_spatial(
     ax.invert_yaxis()
     return fig, ax
 
+
+def plot_spatial_kernel(
+    adata_CC,
+    barcode_idx
+):
+    barcode = adata_CC.obs.index.tolist()[barcode_idx]
+    fig, ax = plt.subplots()
+    ax.scatter(adata_CC.obsm['spatial'][:, 0], adata_CC.obsm['spatial'][:, 1], s=3, c=adata_CC[barcode].X.toarray())
+    return fig, ax
+
+def generate_spatial_kernel_figures(
+    adata_output_df,
+    barcode_indices=500,# or dictionary with sample ids as the keys
+    path_col="run_simba_rna_only",
+    cell_embedding_adata_fn="adata_CC.h5ad",
+    fig_path = "../results/00/pca_rna/PCA",
+    fig_exts=["png"],
+):
+    fig_dir = f"{fig_path}/figures"
+    if not os.path.exists(fig_dir):
+        os.makedirs(fig_dir)
+
+    if isinstance(barcode_indices, int):
+        barcode_indices = {s_id: barcode_indices for s_id in adata_output_df.index}
+        
+    for s_id, dir in tqdm.tqdm(
+        adata_output_df[path_col].items(), 
+        total=adata_output_df.shape[0]
+    ):
+        adata_CC = sc.read_h5ad(f'{dir}/{cell_embedding_adata_fn}')
+
+        for fig_ext in fig_exts:
+            fig_fn = f"{fig_path}/{s_id}.{fig_ext}"
+
+            fig, ax = plot_spatial_kernel(adata_CC, barcode_indices[s_id])
+            fig.savefig(fig_fn)
+            adata_output_df.loc[s_id, f'spatial_kernel_fig_{fig_ext}'] = fig_fn
+
+    return adata_output_df
+
 def generate_pca_figures(
     adata_output_df,
     path_col="run_simba_rna_only",

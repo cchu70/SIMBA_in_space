@@ -26,6 +26,7 @@ def gen_spatial_graph(
         kernel_matrix = csr_matrix(kernel_matrix * scalar, dtype=np.float32)
     elif spatial_method == 'mask':
         kernel_matrix = get_mask(spots, radius=e)
+        kernel_matrix = csr_matrix(kernel_matrix * scalar)
     else:
         raise ValueError(f"spatial_method={spatial_method} not valid.")
 
@@ -56,7 +57,7 @@ def get_mask(spots, radius=5):
     df = pd.DataFrame(neighbors, columns=['neighbors'])
     df['value'] = 1.0
     matrix = df.explode('neighbors').pivot(columns='neighbors').fillna(0.0).to_numpy()
-    return csr_matrix(matrix)
+    return matrix
 
 # < ChatGPT:
 def get_squared_distances(spots):
