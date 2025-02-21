@@ -92,7 +92,7 @@ def main(
     CC_training_weight=1.0,
     rerun=False
 ):
-    output_df = pd.DataFrame(index=list(adata_paths.keys()), columns=['run_simba_spatial_only'])
+    output_df = pd.DataFrame(index=list(adata_paths.keys()), columns=['run_simba_spatial_and_rna']) # typo
 
     pearson_corr_scale_dir = 'T' if pearson_corr_scale else 'F'
 
@@ -117,9 +117,9 @@ def main(
                 CC_training_weight=CC_training_weight,
             )
 
-        output_df.loc[sample, 'run_simba_spatial_only'] = sample_workdir
+        output_df.loc[sample, 'run_simba_spatial_and_rna'] = sample_workdir
 
-    output_fn = f"{workdir}/{spatial_method_dir}/run_simba_spatial_only.output.tsv"
+    output_fn = f"{workdir}/{spatial_method_dir}/run_simba_spatial_and_rna.output.tsv"
     output_df.to_csv(output_fn, sep='\t')
     print(f"Output: {output_fn}")
 
