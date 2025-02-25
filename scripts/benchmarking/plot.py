@@ -187,6 +187,7 @@ def generate_pca_figures(
                 show=False,
             )
             fig.savefig(fig_fn)
+            plt.close()
             adata_output_df.loc[s_id, f'pca_fig_{fig_ext}'] = fig_fn
 
     return adata_output_df
@@ -232,8 +233,10 @@ def generate_umap_figures(
                 fig_size=(6,4),
                 drawing_order='random',
                 save_fig=True,
-                fig_name=fig_fn
+                fig_name=fig_fn,
+
             )
+            plt.close()
             adata_output_df.loc[s_id, f'umap_fig_{fig_ext}'] = f"{fig_path}/figures/{fig_fn}"
 
     return adata_output_df
@@ -271,7 +274,7 @@ def generate_spatial_figures(
                 **kwargs
             )
             fig.savefig(fig_fn)
-
+            plt.close()
             adata_output_df.loc[s_id, f'spatial_fig_{fig_ext}'] = fig_fn
 
     return adata_output_df

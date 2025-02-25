@@ -218,6 +218,7 @@ In ml007
 conda activate cc_mamba_simba
 ../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install squidpy
 ../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install -c anaconda ipykernel
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install conda-forge::cairocffi # graph vis
 ```
 
 # Running benchmarking analysis

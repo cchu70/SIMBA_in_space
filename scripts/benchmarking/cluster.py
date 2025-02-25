@@ -104,7 +104,12 @@ def run_leiden_clustering(
     for sample, adata_dir in tqdm.tqdm(adata_output_df[path_col].items(), total=adata_output_df.shape[0]):
         adata_fn = f"{adata_dir}/{cell_embedding_adata_fn}"
         leiden_adata_fn = f"{adata_dir}/leiden.{cell_embedding_adata_fn}"
-        adata = sc.read_h5ad(adata_fn)
+
+        try:
+            adata = sc.read_h5ad(adata_fn)
+        except:
+            print(f"{adata_fn} does not exist. Skipping")
+            continue
 
         if version == 'PCA':
             leiden_adata, pca_sil, ari, nmi = pca_leiden(adata, true_label_col=true_label_col)
@@ -119,3 +124,23 @@ def run_leiden_clustering(
         performance_df.loc[sample, 'leiden_adata_fn'] = leiden_adata_fn
 
     performance_df.to_csv(performance_output_fn, sep='\t')
+
+
+def run_walktrap(
+    adata, # adata_CG
+    true_label_col='spatialLIBD'
+):
+     # some cells have nans in the spatialLIBD column in spatial PCA
+    nan_true_labels = adata.obs[true_label_col].isna()
+    idx = adata.obs[~nan_true_labels].index.tolist()
+    adata = adata[idx].copy()
+
+    # perform leiden clustering
+    sc.pp.neighbors(adata)
+    sc.tl.leiden(adata)
+
+    # scores
+    ari = adjusted_rand_score(adata.obs[true_label_col], adata.obs['leiden'])
+    nmi = normalized_mutual_info_score(adata.obs[true_label_col], adata.obs['leiden'])
+
+    return adata, ari, nmi
