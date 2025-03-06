@@ -145,7 +145,9 @@ def main(
         adata_CG = sc.read_h5ad(adata_fn) 
 
         sample_workdir = f"{workdir}/{param_dir}/{sample}"
-        if not os.path.exists(sample_workdir) or rerun:
+
+        adata_C_fn = f"{sample_workdir}/adata_C.h5ad"
+        if not os.path.exists(adata_C_fn) or rerun:
             run_simba_spatial_and_rna_BANKSY(
                 sample_workdir, # determine which experiment is being run
                 adata_CG,

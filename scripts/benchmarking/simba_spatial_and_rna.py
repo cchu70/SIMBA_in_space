@@ -90,7 +90,8 @@ def main(
     pearson_corr_scale=False,
     spatial_method='gaussian', # rbf, mask
     CC_training_weight=1.0,
-    rerun=False
+    rerun=False,
+    all=False,
 ):
     output_df = pd.DataFrame(index=list(adata_paths.keys()), columns=['run_simba_spatial_and_rna']) # typo
 
@@ -106,7 +107,8 @@ def main(
         adata_CG = sc.read_h5ad(adata_fn)
 
         sample_workdir = f"{workdir}/{spatial_method_dir}/{sample}"
-        if not os.path.exists(sample_workdir) or rerun:
+        adata_fn = f"{sample_workdir}/adata_C.h5ad"
+        if not os.path.exists(adata_fn) or rerun:
             run_simba_spatial_and_rna(
                 workdir=sample_workdir,
                 adata_CG=adata_CG,
@@ -119,7 +121,13 @@ def main(
 
         output_df.loc[sample, 'run_simba_spatial_and_rna'] = sample_workdir
 
-    output_fn = f"{workdir}/{spatial_method_dir}/run_simba_spatial_and_rna.output.tsv"
+
+    if all:
+        output_fn = f"{workdir}/{spatial_method_dir}/run_simba_spatial_and_rna.output.tsv"
+    else:
+        joined_samples = "_".join(list(adata_paths.keys()))
+        output_fn = f"{workdir}/{spatial_method_dir}/run_simba_spatial_and_rna.output.{joined_samples}.tsv"
+
     output_df.to_csv(output_fn, sep='\t')
     print(f"Output: {output_fn}")
 
@@ -165,5 +173,6 @@ if __name__ == "__main__":
         pearson_corr_scale=args.pearson_corr_scale,
         spatial_method=args.spatial_method,
         CC_training_weight=args.CC_training_weight,
-        rerun=args.rerun
+        rerun=args.rerun,
+        all=args.adata_dir is not None,
     )

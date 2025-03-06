@@ -14,4 +14,3 @@ python benchmarking/simba_spatial_and_rna_BANKSY.py \
     --spatial_method mask \
     --e 500 \
     --n_bins 10 \
-    --rerun 
