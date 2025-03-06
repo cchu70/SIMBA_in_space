@@ -11,5 +11,5 @@ python benchmarking/simba_spatial_and_rna_regions_entities.py \
     --workdir ../results/00/simba_spatial_and_rna_region_entities \
     --adata_dir ../data/human_DLPFC \
     --grid_size 500 \
-    --CR_training_weight 1.0 \
+    --CR_training_weight 0.5 \
     --rerun

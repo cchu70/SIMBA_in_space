@@ -156,10 +156,12 @@ def main(
 ):
     output_df = pd.DataFrame(index=list(adata_paths.keys()), columns=['run_simba_spatial_and_rna']) # typo
 
+    param_dir = f'regions_g{grid_size}_w{CR_training_weight}' 
+
     for sample, adata_fn in adata_paths.items():
         adata_CG = sc.read_h5ad(adata_fn)
 
-        sample_workdir = f"{workdir}/{sample}"
+        sample_workdir = f"{workdir}/{param_dir}/{sample}"
         if not os.path.exists(sample_workdir) or rerun:
             run_simba_spatial_and_rna_region_entitites(
                 workdir=sample_workdir,
