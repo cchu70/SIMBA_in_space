@@ -136,7 +136,7 @@ def main(
     all=True,
     base_label='gene'
 ):
-    output_df = pd.DataFrame(index=list(adata_paths.keys()), columns=['run_simba_spatial_and_rna']) # typo
+    output_df = pd.DataFrame(index=list(adata_paths.keys()), columns=['run_simba_spatial_and_rna_BANKSY']) # typo
 
     assert spatial_method in SPATIAL_METHODS
     param_dir = f'{spatial_method}_e{e}_l{lambda_val}_b{n_bins}'
@@ -157,13 +157,13 @@ def main(
                 n_bins=n_bins,
             )
 
-        output_df.loc[sample, 'run_simba_spatial_and_rna'] = sample_workdir
+        output_df.loc[sample, 'run_simba_spatial_and_rna_BANKSY'] = sample_workdir
 
     if all:
-        output_fn = f"{workdir}/{param_dir}/run_simba_spatial_and_rna.output.tsv"
+        output_fn = f"{workdir}/{param_dir}/run_simba_spatial_and_rna_BANKSY.output.tsv"
     else:
         joined_samples = "_".join(list(adata_paths.keys()))
-        output_fn = f"{workdir}/{param_dir}/run_simba_spatial_and_rna.output.{joined_samples}.tsv"
+        output_fn = f"{workdir}/{param_dir}/run_simba_spatial_and_rna_BANKSY.output.{joined_samples}.tsv"
     output_df.to_csv(output_fn, sep='\t')
     print(f"Output: {output_fn}")
 

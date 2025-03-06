@@ -9,8 +9,9 @@ export PATH="/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_mamba
 
 python benchmarking/simba_spatial_and_rna_BANKSY.py \
     --workdir ../results/00/simba_spatial_and_BANKSY \
-    --adata_fns ../data/human_DLPFC/151507.h5ad \
+    --adata_dir ../data/human_DLPFC \
     --lambda_val 0.8 \
     --spatial_method mask \
     --e 500 \
     --n_bins 10 \
+    --rerun 
