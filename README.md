@@ -192,6 +192,27 @@ pip install scanpy seaborn matplotlib pandas numpy
 
 Follow tutorial: https://lulushang.org/SpatialPCA_Tutorial/DLPFC.html
 
+### Using AnndataR package
+
+Use the same adata files used in other experiments. Had to manually set paths for R to install 
+
+```bash
+cat ~/.R/Makevars 
+CC=/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_simba/bin/x86_64-conda-linux-gnu-cc
+CXX=/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_simba/bin/x86_64-conda-linux-gnu-c++
+CXX11=/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_simba/bin/x86_64-conda-linux-gnu-c++
+CXX14=/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_simba/bin/x86_64-conda-linux-gnu-c++
+CXX17=/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_simba/bin/x86_64-conda-linux-gnu-c++
+CXX20=/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_simba/bin/x86_64-conda-linux-gnu-c++
+FC=/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/cc_simba/bin/x86_64-conda-linux-gnu-gfortran
+```
+
+Install hdf5r
+```
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install -c conda-forge hdf5
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install -c conda-forge r-hdf5
+```
+
 # Setting up conda environment on cluster
 
 Make the `yml` file:
@@ -220,6 +241,26 @@ conda activate cc_mamba_simba
 ../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install -c anaconda ipykernel
 ../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install conda-forge::cairocffi # graph vis
 ```
+
+Trying CORAL/SIMBA+ package
+
+```
+git clone git@github.com:pinellolab/CORAL.git
+../../../SHARED_SOFTWARE/anaconda_latest/bin/mamba create -n coral_mamba_env python==3.8
+conda activate coral_mamba_env
+cd CORAL
+pip install -e .
+
+../../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install ipykernel
+python -m ipykernel install --user --name coral_mamba_env --display-name coral_mamba_env
+
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install conda-forge::torch-sparse
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba install conda-forge::scanp
+
+# update to 3.9 for scanpy
+../../SHARED_SOFTWARE/anaconda_latest/bin/mamba create -n coral_mamba_env_py3.9 python==3.9 ipykernel conda-forge::torch-sparse conda-forge::scanpy
+```
+
 
 # Running benchmarking analysis
 
