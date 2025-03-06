@@ -174,10 +174,10 @@ def main(
         output_df.loc[sample, 'run_simba_spatial_and_rna'] = sample_workdir
 
     if all:
-        output_fn = f"{workdir}/run_simba_spatial_and_rna.output.tsv"
+        output_fn = f"{workdir}/{param_dir}/run_simba_spatial_and_rna.output.tsv"
     else:
         joined_samples = "_".join(list(adata_paths.keys()))
-        output_fn = f"{workdir}/run_simba_spatial_and_rna.output.{joined_samples}.tsv"
+        output_fn = f"{workdir}/{param_dir}/run_simba_spatial_and_rna.output.{joined_samples}.tsv"
     output_df.to_csv(output_fn, sep='\t')
     print(f"Output: {output_fn}")
 

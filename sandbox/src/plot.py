@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-
+import copy
 from matplotlib.colors import Normalize
 
 # approximate original figure in http://spatial.libd.org/spatialLIBD/
@@ -121,7 +121,7 @@ def plot_obs_spatial(
     # Flatten axes for easier iteration of multiple rows
     axes_flat = axes.flatten()
 
-    obs_df = copy.deepcopy(adata_CG.obs)
+    obs_df = copy.deepcopy(adata.obs)
 
     if filter_col:
         obs_df = obs_df[obs_df[filter_col].isin(filter_vals)]
