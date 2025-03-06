@@ -259,6 +259,10 @@ python -m ipykernel install --user --name coral_mamba_env --display-name coral_m
 
 # update to 3.9 for scanpy
 ../../SHARED_SOFTWARE/anaconda_latest/bin/mamba create -n coral_mamba_env_py3.9 python==3.9 ipykernel conda-forge::torch-sparse conda-forge::scanpy
+conda activate coral_mamba_env_py3.9
+
+export PATH="/data/pinello/SHARED_SOFTWARE/anaconda_latest/envs/cc_envs/coral_mamba_env_py3.9/bin:$PATH"
+python -m ipykernel install --user --name coral_mamba_env_py3.9
 ```
 
 
