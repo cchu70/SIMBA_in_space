@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import copy
 import seaborn as sns
+from scipy.spatial import cKDTree
 # import squidpy as sq
 
 # approximate original figure in http://spatial.libd.org/spatialLIBD/
@@ -196,12 +197,14 @@ def generate_umap_figures(
     adata_output_df,
     path_col="run_simba_rna_only",
     cell_embedding_adata_fn="adata_C.h5ad",
+    original_adata_CG_dir=None, #"../data/human_DLPFC", only if plot_method == scatter_pie
     fig_path = "../results/00/simba_rna_only/UMAP",
     adata_color_col="spatialLIBD",
     fig_exts=["png"],
     run_umap=True,
     palette=palette_celltype,
     include_legend=True,
+    plot_method='standard' # ['scatter_pie']
 ):
     """
     adata_output_df: 
@@ -220,28 +223,103 @@ def generate_umap_figures(
     for s_id, dir in tqdm.tqdm(
         adata_output_df[path_col].items(), 
         total=adata_output_df.shape[0]
-    ):
+    ):  
+
         adata_C = sc.read_h5ad(f'{dir}/{cell_embedding_adata_fn}')
 
         if run_umap:
             si.tl.umap(adata_C,n_neighbors=15,n_components=2)
 
         for fig_ext in fig_exts:
-            fig_fn = f"{s_id}.{fig_ext}"
-            si.pl.umap(
-                adata_C,color=[adata_color_col],
-                dict_palette={adata_color_col: palette} if palette is not None else None,
-                fig_size=(6,4),
-                drawing_order='random',
-                save_fig=True,
-                fig_name=fig_fn,
-                legend="auto" if include_legend else False,
-            )
+
+            if plot_method == 'standard':
+                fig_fn = f"{s_id}.{fig_ext}"
+                si.pl.umap(
+                    adata_C,color=[adata_color_col],
+                    dict_palette={adata_color_col: palette} if palette is not None else None,
+                    fig_size=(6,4),
+                    drawing_order='random',
+                    save_fig=True,
+                    fig_name=fig_fn,
+                    legend="auto" if include_legend else False,
+                )
+            elif plot_method == 'scatter_pie':
+                fig_fn = f"{s_id}.scatter_pie.{fig_ext}"
+
+                adata_CG = sc.read_h5ad(f'{original_adata_CG_dir}/{s_id}.h5ad')
+                adata_C.obsm['spatial'] = adata_CG.obsm['spatial'].copy()
+
+                coordinates = pd.DataFrame(adata_C.obsm['X_umap'], index=adata_C.obs.index, columns=['umap1', 'umap2'])
+                plot_scatter_pie(
+                    adata_C, 
+                    coordinates, coor_x='umap1', coor_y='umap2',
+                    fig_size=(6, 4), 
+                    fig_fn=fig_fn
+                )
 
             plt.close()
             adata_output_df.loc[s_id, f'umap_fig_{fig_ext}'] = f"{fig_path}/figures/{fig_fn}"
 
     return adata_output_df
+
+def draw_pie(dist, 
+             xpos, 
+             ypos, 
+             size, 
+             colors,
+             ax=None):
+    """
+    From here: https://stackoverflow.com/a/56338575
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10,8))
+
+    # for incremental pie slices
+    non_zero_dist = dist[dist > 0]
+    cumsum = np.cumsum(non_zero_dist)
+    cumsum = cumsum/ cumsum[-1]
+    pie = [0] + cumsum.tolist()
+
+    i = 0
+    for r1, r2 in zip(pie[:-1], pie[1:]):
+        angles = np.linspace(2 * np.pi * r1, 2 * np.pi * r2)
+        x = [0] + np.cos(angles).tolist()
+        y = [0] + np.sin(angles).tolist()
+
+        xy = np.column_stack([x, y])
+
+        label = non_zero_dist.index[i]
+        ax.scatter([xpos], [ypos], marker=xy, s=size, facecolor=colors[label], linewidths=0.1, edgecolors='k')
+        i += 1
+    
+    return ax
+
+def plot_scatter_pie(adata_C, coordinates, coor_x='umap1', coor_y='umap2', fig_size=(4, 4), fig_fn=None):
+
+    coords = adata_C.obsm['spatial']
+    tree = cKDTree(coords)
+
+    k=6
+    # Query the k+1 nearest neighbors (to exclude the point itself)
+    distances, indices = tree.query(coords, k=k+1)
+    # Exclude self (first column)
+    indices = indices[:, 1:]
+    indices_df = pd.DataFrame(indices, index=adata_C.obs.index, columns=np.arange(1, k + 1))
+
+
+    fig, ax = plt.subplots(figsize=fig_size)
+    for cell, r in coordinates.iterrows():
+        k_neighbors = indices_df.loc[cell].to_numpy()
+        dist = adata_C.obs.loc[adata_C.obs.index[k_neighbors]]['spatialLIBD'].value_counts()
+        draw_pie(dist, 
+                r[coor_x], 
+                r[coor_y], 
+                size=8, 
+                colors=palette_celltype,
+                ax=ax)
+        
+    fig.savefig(fig_fn)
+    plt.close()
 
 def generate_spatial_figures(
     adata_output_df,
