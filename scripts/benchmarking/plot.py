@@ -201,6 +201,7 @@ def generate_umap_figures(
     fig_exts=["png"],
     run_umap=True,
     palette=palette_celltype,
+    include_legend=True,
 ):
     """
     adata_output_df: 
@@ -234,8 +235,9 @@ def generate_umap_figures(
                 drawing_order='random',
                 save_fig=True,
                 fig_name=fig_fn,
-
+                legend="auto" if include_legend else False,
             )
+
             plt.close()
             adata_output_df.loc[s_id, f'umap_fig_{fig_ext}'] = f"{fig_path}/figures/{fig_fn}"
 
