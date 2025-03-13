@@ -165,31 +165,57 @@ def generate_pca_figures(
     fig_exts=["png"],
     run_pca=False,
     palette=palette_celltype,
+    plot_method='standard', # 'scatter_pie'
+    original_adata_CG_dir=None, # path to original data for spatial coordinates. Only needed for scatter pie
+    fig_size=(12, 8), 
+    size=8,
 ):
     
     fig_dir = f"{fig_path}/figures"
     if not os.path.exists(fig_dir):
         os.makedirs(fig_dir)
         
-    for s_id, dir in tqdm.tqdm(
+    for s_id, output_dir in tqdm.tqdm(
         adata_output_df[path_col].items(), 
         total=adata_output_df.shape[0]
     ):
-        adata = sc.read_h5ad(f'{dir}/{cell_embedding_adata_fn}')
+        adata = sc.read_h5ad(f'{output_dir}/{cell_embedding_adata_fn}')
         if run_pca:
             si.preprocessing.pca(adata)
 
         for fig_ext in fig_exts:
-            fig_fn = f"{fig_path}/{s_id}.{fig_ext}"
-            fig = sc.pl.pca(
-                adata, color=[adata_color_col], palette=palette, 
-                dimensions=(0, 1),
-                return_fig=True,
-                show=False,
-            )
-            fig.savefig(fig_fn)
-            plt.close()
-            adata_output_df.loc[s_id, f'pca_fig_{fig_ext}'] = fig_fn
+
+            if plot_method == 'standard':
+                fig_fn = f"{fig_path}/{s_id}.{fig_ext}"
+                fig = sc.pl.pca(
+                    adata, color=[adata_color_col], palette=palette, 
+                    dimensions=(0, 1),
+                    return_fig=True,
+                    show=False,
+                )
+                fig.savefig(fig_fn)
+                plt.close()
+                adata_output_df.loc[s_id, f'pca_fig_{fig_ext}'] = fig_fn
+
+            elif plot_method == 'scatter_pie':
+                fig_fn = f"{fig_path}/{s_id}.scatter_pie.{fig_ext}"
+
+                adata_CG = sc.read_h5ad(f'{original_adata_CG_dir}/{s_id}.h5ad')
+                shared_idx = np.intersect1d(adata_CG.obs.index.to_numpy(), adata.obs.index.to_numpy())
+                adata = adata[shared_idx].copy()
+                adata.obsm['spatial'] = adata_CG[shared_idx, :].obsm['spatial'].copy()
+
+                coordinates = pd.DataFrame(adata.obsm['X_pca'][:, :2], index=adata.obs.index, columns=['PC1', 'PC2'])
+                plot_scatter_pie(
+                    adata, 
+                    coordinates, coor_x='PC1', coor_y='PC2',
+                    fig_fn=fig_fn,
+                    fig_size=fig_size, 
+                    size=size,
+                )
+                plt.close()
+                adata_output_df.loc[s_id, f'pca_fig_{fig_ext}'] = fig_fn
+
 
     return adata_output_df
 
@@ -204,7 +230,9 @@ def generate_umap_figures(
     run_umap=True,
     palette=palette_celltype,
     include_legend=True,
-    plot_method='standard' # ['scatter_pie']
+    plot_method='standard', # ['scatter_pie']
+    fig_size=(12, 8), 
+    size=8,
 ):
     """
     adata_output_df: 
@@ -243,22 +271,25 @@ def generate_umap_figures(
                     fig_name=fig_fn,
                     legend="auto" if include_legend else False,
                 )
+                adata_output_df.loc[s_id, f'umap_fig_{fig_ext}'] = f"{fig_path}/figures/{fig_fn}"
             elif plot_method == 'scatter_pie':
                 fig_fn = f"{s_id}.scatter_pie.{fig_ext}"
 
                 adata_CG = sc.read_h5ad(f'{original_adata_CG_dir}/{s_id}.h5ad')
-                adata_C.obsm['spatial'] = adata_CG.obsm['spatial'].copy()
+                adata_C.obsm['spatial'] = adata_CG[adata_C.obs.index, :].obsm['spatial'].copy()
 
                 coordinates = pd.DataFrame(adata_C.obsm['X_umap'], index=adata_C.obs.index, columns=['umap1', 'umap2'])
                 plot_scatter_pie(
                     adata_C, 
                     coordinates, coor_x='umap1', coor_y='umap2',
-                    fig_size=(6, 4), 
-                    fig_fn=fig_fn
+                    fig_size=fig_size,
+                    size=size,
+                    fig_fn=f'{fig_path}/{fig_fn}'
                 )
+                adata_output_df.loc[s_id, f'umap_fig_{fig_ext}'] = f'{fig_path}/{fig_fn}'
 
             plt.close()
-            adata_output_df.loc[s_id, f'umap_fig_{fig_ext}'] = f"{fig_path}/figures/{fig_fn}"
+            
 
     return adata_output_df
 
@@ -294,7 +325,7 @@ def draw_pie(dist,
     
     return ax
 
-def plot_scatter_pie(adata_C, coordinates, coor_x='umap1', coor_y='umap2', fig_size=(4, 4), fig_fn=None):
+def plot_scatter_pie(adata_C, coordinates, coor_x='umap1', coor_y='umap2', fig_size=(4, 4), size=8, fig_fn=None):
 
     coords = adata_C.obsm['spatial']
     tree = cKDTree(coords)
@@ -314,7 +345,7 @@ def plot_scatter_pie(adata_C, coordinates, coor_x='umap1', coor_y='umap2', fig_s
         draw_pie(dist, 
                 r[coor_x], 
                 r[coor_y], 
-                size=8, 
+                size=size, 
                 colors=palette_celltype,
                 ax=ax)
         
