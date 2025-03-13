@@ -88,7 +88,9 @@ def run_niche_comparison(
         adata_C = sc.read_h5ad(f"{sample_output_dir}/{cell_embedding_adata_fn}")
         if version == 'PCA':
             print("setting PCA for X in new adata object")
-            adata_C = ad.AnnData(csr_matrix(adata_C.obsm['X_pca']), obs=adata_C.obs)
+            shared_idx = np.intersect1d(adata_C.obs.index, adata_CG.obs.index)
+            adata_CG = adata_CG[shared_idx, :].copy()
+            adata_C = ad.AnnData(csr_matrix(adata_C[shared_idx, :].obsm['X_pca']), obs=adata_C[shared_idx, :].obs)
 
         raw_data, performance_data = get_cossim_corr(adata_CG, adata_C, label='spatialLIBD', trust_n_neighbors=6)
         performance_df.loc[s_id, list(performance_data.keys())] = list(performance_data.values())
