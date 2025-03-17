@@ -380,7 +380,7 @@ def generate_spatial_figures(
             fig, ax = plot_obs_spatial(
                 adata,
                 obs_cols=[adata_color_col],
-                palette=None,
+                # palette=None,
                 is_continuous=False,
                 **kwargs
             )
